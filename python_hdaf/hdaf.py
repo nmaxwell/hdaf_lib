@@ -1,14 +1,13 @@
 
-
-
 from ctypes import *
-from numpy import *
+
+#from numpy import *
+import numpy
 
 
 c_hdaf = cdll.LoadLibrary('/usr/lib/libhdaf.so.1')
 
 hdaf_data_dir = '/workspace/hdaf_data'
-
 
 
 c_hdaf.sigma_from_cutoff_frequency.argtyprs = [ c_double, c_int ]
@@ -17,17 +16,31 @@ c_hdaf.sigma_from_cutoff_frequency.restype = c_double
 def freq_to_sigma( f, m ):
     return c_hdaf.sigma_from_cutoff_frequency( c_double(f), c_int(m) )
 
-c_hdaf.get_hdaf_kernel.argtypes=[ c_void_p, c_int, c_double, c_int, c_double, c_char_p  ]
+
+
+c_hdaf.hdaf_equate_arrays.argtypes = [ c_void_p, c_void_p, c_ulong ]
+
+c_hdaf.hdaf_free_array.argtypes = [ c_void_p ]
+
+
+
+c_hdaf.get_hdaf_kernel.argtypes=[ c_void_p, c_void_p, c_double, c_int, c_double, c_char_p  ]
 c_hdaf.get_hdaf_kernel.restype = c_int
 
-def get_hdaf_kernel( array, n_array, sampling_period, order, sigma ):
-    p =  array.ctypes.data_as(c_void_p )
-    size = c_int(10)
-    error = c_hdaf.get_hdaf_kernel( p, byref(size), c_double(sampling_period), c_int(order), c_double(sigma), c_char_p(hdaf_data_dir) )
+
+def get_hdaf_kernel( sampling_period, order, sigma ):
     
-
-
-
+    ptr = c_void_p()
+    size = c_ulong()
+    
+    error = c_hdaf.get_hdaf_kernel( byref(ptr), byref(size), c_double(sampling_period), c_int(order), c_double(sigma), c_char_p(hdaf_data_dir) )
+    
+    ar = numpy.zeros(size.value)
+    c_hdaf.hdaf_equate_arrays( ar.ctypes.data_as(c_void_p), ptr, size )
+    c_hdaf.hdaf_free_array( ptr )
+    ptr = c_void_p()
+    
+    return ar
 
 
 

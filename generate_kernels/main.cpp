@@ -73,7 +73,7 @@ int main()
         int n_points2;
         
         int rerr = 0;
-        rerr = read_std_hdaf_kernel_file( fname, order2, h2, n_points2, kernel2 );
+        rerr = read_std_hdaf_kernel_file( fname, &order2, &h2, &n_points2, &kernel2 );
         if ( rerr )
             cerr << "read error:\t" << rerr << endl;
         

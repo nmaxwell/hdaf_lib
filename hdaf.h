@@ -81,17 +81,17 @@ double sigma_from_cutoff_frequency( double cutoff_frequency, int hdaf_order );
 
 int write_std_hdaf_kernel_file( const char * file_name, int hdaf_order, double step_size, int n_points, double *std_kernel );
 
-int read_std_hdaf_kernel_file( const char * file_name, int &hdaf_order, double &step_size, int &n_points, double *&std_kernel );
+int read_std_hdaf_kernel_file( const char * file_name, int *hdaf_order, double *step_size, int *n_points, double **std_kernel );
 
 double hdaf_interpolate( double * std_kernel, int n_points, double step_size, double x );
 
-int get_hdaf_kernel(double *&kernel, int & kernel_size, double sampling_period, int order, double sigma, const char *hdaf_data_dir );
+int get_hdaf_kernel(double **kernel, int * kernel_size, double sampling_period, int order, double sigma, const char *hdaf_data_dir );
 
 
 
-int get_hdaf_kernel_lp(double *&kernel, int & kernel_size, double sampling_period, int order, double cutoff_frequency, const char *hdaf_data_dir );
+int get_hdaf_kernel_lp(double **kernel, int * kernel_size, double sampling_period, int order, double cutoff_frequency, const char *hdaf_data_dir );
 
-int get_hdaf_kernel_bp(double *&kernel, int & kernel_size, double sampling_period, int low_pass_order, double low_pass_frequency, int high_pass_order, double high_pass_frequency, const char *hdaf_data_dir );
+int get_hdaf_kernel_bp(double **kernel, int * kernel_size, double sampling_period, int low_pass_order, double low_pass_frequency, int high_pass_order, double high_pass_frequency, const char *hdaf_data_dir );
 
 
 

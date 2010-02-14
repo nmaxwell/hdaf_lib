@@ -41,7 +41,7 @@ int main()
     int kernel_size=0;
     
     int error=0;
-    error = get_hdaf_kernel( kernel, kernel_size, sampling_period, order, sigma, "/workspace/hdaf_data" );
+    error = get_hdaf_kernel( &kernel, &kernel_size, sampling_period, order, sigma, "/workspace/hdaf_data" );
     
     if (error)
         cout << "get_hdaf_kernel error: " << error << endl;

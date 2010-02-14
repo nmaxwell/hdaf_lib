@@ -18,11 +18,27 @@ using namespace std;
 
 #define _debug_here( pos ) ( printf( "debug: file %s; \n line %d; \t code %d\n", __FILE__ , __LINE__, pos ) );
 
-double foo( int *x )
+
+
+
+
+void hdaf_equate_arrays( double *x, double *y, unsigned int size )
 {
-    printf("fooed.\n");
-    return (*x)*(*x);
+    if ( size != 0 && x != NULL && y != NULL )
+    {
+        for (unsigned int k=0; k<size; k++)
+            x[k] = y[k];
+    }
 }
+
+void hdaf_free_array( double *p )
+{
+    if (p != NULL)
+        free( p );
+    
+    p = NULL;
+}
+
 
 
 void std_kernel_file_naming_convention( char * file_name, const char *hdaf_data_dir, int hdaf_order )
@@ -92,7 +108,7 @@ int write_std_hdaf_kernel_file( const char * file_name, int hdaf_order, double s
 
 
 
-int read_std_hdaf_kernel_file( const char * file_name, int &hdaf_order, double &step_size, int &n_points, double *&kernel )
+int read_std_hdaf_kernel_file( const char * file_name, int *hdaf_order, double *step_size, int *n_points, double **kernel )
 {
 /*
     
@@ -114,6 +130,9 @@ int read_std_hdaf_kernel_file( const char * file_name, int &hdaf_order, double &
         8 corrupt kernel data
     
 */
+    
+    if (kernel==NULL || hdaf_order==NULL || n_points==NULL || step_size==NULL )
+        return -1;
     
     ifstream in;
     in.open(file_name, ios::in | ios::binary );
@@ -138,35 +157,35 @@ int read_std_hdaf_kernel_file( const char * file_name, int &hdaf_order, double &
         return 4;
     in.close();
     
-    hdaf_order = *( (int*)(buff+0) );
-    n_points   = *( (int*)(buff+4) );
-    step_size  = *( (double*)(buff+8) );
+    *hdaf_order = *( (int*)(buff+0) );
+    *n_points   = *( (int*)(buff+4) );
+    *step_size  = *( (double*)(buff+8) );
     
-    if ( hdaf_order<0 || n_points<=0 || step_size<=0 || isinf(step_size) || isnan(step_size) || !(step_size==step_size) )
+    if ( *hdaf_order<0 || *n_points<=0 || *step_size<=0 || isinf(*step_size) || isnan(*step_size) || !(*step_size==*step_size) )
         return 5;
     
     int n_points_read = (file_size-size_hdr)/8;
-    if ( n_points_read != n_points )
+    if ( n_points_read != *n_points )
         return 6;
     
-    if (kernel != NULL)
+    if (*kernel != NULL)
     {
-        free( kernel );
+        free( *kernel );
         kernel = 0;
     }
     
-    kernel = (double *)malloc( n_points*8 );
+    *kernel = (double *)malloc( (*n_points)*8 );
     
-    if (kernel == NULL)
+    if (*kernel == NULL)
     {
-        n_points = 0;
+        *n_points = 0;
         return 7;
     }
     
-    for (int k=0; k<n_points; k++)
+    for (int k=0; k<(*n_points); k++)
     {
-        kernel[k] = *( (double*)(buff+size_hdr+k*8) );
-        if ( isinf(kernel[k]) || isnan(kernel[k]) || !(kernel[k]==kernel[k]) )
+        (*kernel)[k] = *( (double*)(buff+size_hdr+k*8) );
+        if ( isinf((*kernel)[k]) || isnan((*kernel)[k]) || !((*kernel)[k]==(*kernel)[k]) )
             return 8;
     }
     
@@ -177,7 +196,7 @@ int read_std_hdaf_kernel_file( const char * file_name, int &hdaf_order, double &
 }
 
 
-double hdaf_data_access( int k, double * kernel, int n_points )
+double hdaf_data_access( int k, double *kernel, int n_points )
 {
     k = abs(k);
     if (k>=n_points) return 0.0;
@@ -212,8 +231,11 @@ double hdaf_interpolate( double * kernel, int n_points, double step_size, double
 }
 
 
-int get_hdaf_kernel(double *&kernel, int & kernel_size, double sampling_period, int order, double sigma, const char *hdaf_data_dir )
+int get_hdaf_kernel(double **kernel, int *kernel_size, double sampling_period, int order, double sigma, const char *hdaf_data_dir )
 {
+    if ( kernel == NULL || kernel_size==NULL )
+        return -1;
+    
     if ( sampling_period<= 1E-15 || order < 0 || sigma <=0.0 )
         return 1;
     
@@ -226,7 +248,7 @@ int get_hdaf_kernel(double *&kernel, int & kernel_size, double sampling_period, 
     int n_points=0;
     double * std_kernel=0;
     
-    error = read_std_hdaf_kernel_file( file_name, read_order, step_size,  n_points, std_kernel );
+    error = read_std_hdaf_kernel_file( file_name, &read_order, &step_size,  &n_points, &std_kernel );
     
     if (error)
         return 100+error;
@@ -236,33 +258,27 @@ int get_hdaf_kernel(double *&kernel, int & kernel_size, double sampling_period, 
     
     if ( std_kernel==NULL )
         return 3;
-        
-    _debug_here(1)
-    printf( "%d\t\n", kernel_size );
-    _debug_here(10)
-    kernel_size = (step_size*n_points)/sampling_period+1;
-    _debug_here(2)
-    printf( "%x\n", (unsigned)((void *)kernel) );
-    _debug_here(3)
-    if (kernel != NULL)
+    
+    *kernel_size = (int)ceil((step_size*n_points)/sampling_period);
+    
+    if (*kernel != NULL)
     {
-        free( kernel );
-        kernel = 0;
+        free( *kernel );
+        *kernel = 0;
     }
-    _debug_here(4)
-    kernel = (double *)malloc( kernel_size*8 );
-    _debug_here(5)
-    if (kernel == NULL)
+    
+    *kernel = (double *)malloc( (*kernel_size)*8 );
+    
+    if (*kernel == NULL)
     {
-        kernel_size = 0;
+        *kernel_size = 0;
         return 4;
     }
-    _debug_here(6)
     
     double s = 1.0/(hdaf_sqrt2*sigma);
     
-    for (int k=0; k<kernel_size; k++)
-        kernel[k] = s*hdaf_interpolate( std_kernel, n_points, step_size, (sampling_period*k)*s )*sampling_period;
+    for (int k=0; k<*kernel_size; k++)
+        (*kernel)[k] = s*hdaf_interpolate( std_kernel, n_points, step_size, (sampling_period*k)*s )*sampling_period;
     
     // std kernel is not scaled by it's step size, doing so for returned kernel.
     
@@ -271,16 +287,19 @@ int get_hdaf_kernel(double *&kernel, int & kernel_size, double sampling_period, 
     return 0;
 }
 
-int get_hdaf_kernel_lp(double *&kernel, int & kernel_size, double sampling_period, int order, double cutoff_frequency, const char *hdaf_data_dir )
+int get_hdaf_kernel_lp(double **kernel, int *kernel_size, double sampling_period, int order, double cutoff_frequency, const char *hdaf_data_dir )
 {
     double sigma = sigma_from_cutoff_frequency( cutoff_frequency, order );
     return get_hdaf_kernel( kernel, kernel_size, sampling_period, order, sigma, hdaf_data_dir );
 }
 
-int get_hdaf_kernel_bp(double *&kernel, int & kernel_size, double sampling_period, int low_pass_order, double low_pass_frequency, int high_pass_order, double high_pass_frequency, const char *hdaf_data_dir )
+int get_hdaf_kernel_bp(double **kernel, int *kernel_size, double sampling_period, int low_pass_order, double low_pass_frequency, int high_pass_order, double high_pass_frequency, const char *hdaf_data_dir )
 {
-    double * low_pass_ker=0;
-    double * high_pass_ker=0;
+    if ( kernel == NULL || kernel_size==NULL )
+        return -1;
+    
+    double *low_pass_ker=0;
+    double *high_pass_ker=0;
     int low_pass_ker_size=0;
     int high_pass_ker_size=0;
     double low_pass_sigma = sigma_from_cutoff_frequency( low_pass_frequency, low_pass_order );
@@ -289,11 +308,11 @@ int get_hdaf_kernel_bp(double *&kernel, int & kernel_size, double sampling_perio
     int low_pass_err=0;
     int high_pass_err=0;
     
-    low_pass_err= get_hdaf_kernel( low_pass_ker, low_pass_ker_size, sampling_period, low_pass_order, low_pass_sigma, hdaf_data_dir );
+    low_pass_err = get_hdaf_kernel( &low_pass_ker, &low_pass_ker_size, sampling_period, low_pass_order, low_pass_sigma, hdaf_data_dir );
     if (low_pass_err)
         return 100+low_pass_err;
     
-    high_pass_err= get_hdaf_kernel( high_pass_ker, high_pass_ker_size, sampling_period, high_pass_order, high_pass_sigma, hdaf_data_dir );
+    high_pass_err = get_hdaf_kernel( &high_pass_ker, &high_pass_ker_size, sampling_period, high_pass_order, high_pass_sigma, hdaf_data_dir );
     if (high_pass_err)
         return 200+high_pass_err;
     
@@ -304,8 +323,8 @@ int get_hdaf_kernel_bp(double *&kernel, int & kernel_size, double sampling_perio
         for (int k=0; k<high_pass_ker_size; k++)
             low_pass_ker[k] -= high_pass_ker[k];
         
-        kernel = low_pass_ker;
-        kernel_size = low_pass_ker_size;
+        *kernel = low_pass_ker;
+        *kernel_size = low_pass_ker_size;
         
         free(high_pass_ker);
         high_pass_ker = 0;
@@ -319,8 +338,8 @@ int get_hdaf_kernel_bp(double *&kernel, int & kernel_size, double sampling_perio
         for (int k=low_pass_ker_size; k<high_pass_ker_size; k++)
             high_pass_ker[k] = 0.0 - high_pass_ker[k];
         
-        kernel = high_pass_ker;
-        kernel_size = high_pass_ker_size;
+        *kernel = high_pass_ker;
+        *kernel_size = high_pass_ker_size;
         
         free(low_pass_ker);
         low_pass_ker = 0;
