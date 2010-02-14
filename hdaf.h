@@ -85,8 +85,11 @@ int read_std_hdaf_kernel_file( const char * file_name, int *hdaf_order, double *
 
 double hdaf_interpolate( double * std_kernel, int n_points, double step_size, double x );
 
+
 int get_hdaf_kernel(double **kernel, int * kernel_size, double sampling_period, int order, double sigma, const char *hdaf_data_dir );
 
+
+int get_hdaf_kernel_arbitrary_points(double *eval_points, double *kernel, int n_points, int order, double sigma, const char *hdaf_data_dir );
 
 
 int get_hdaf_kernel_lp(double **kernel, int * kernel_size, double sampling_period, int order, double cutoff_frequency, const char *hdaf_data_dir );

@@ -278,19 +278,70 @@ int get_hdaf_kernel(double **kernel, int *kernel_size, double sampling_period, i
     double s = 1.0/(hdaf_sqrt2*sigma);
     
     for (int k=0; k<*kernel_size; k++)
-        (*kernel)[k] = s*hdaf_interpolate( std_kernel, n_points, step_size, (sampling_period*k)*s )*sampling_period;
+        (*kernel)[k] = s*hdaf_interpolate( std_kernel, n_points, step_size, (sampling_period*k)*s );
     
     // std kernel is not scaled by it's step size, doing so for returned kernel.
     
     free( std_kernel );
+    std_kernel=0;
     
     return 0;
 }
 
+int get_hdaf_kernel_arbitrary_points(double *eval_points, double *kernel, int n_points, int order, double sigma, const char *hdaf_data_dir )
+{
+    if (n_points<=0 || kernel==NULL || eval_points==NULL )
+        return 1;
+    
+    char file_name[hdaf_max_file_name_length];
+    std_kernel_file_naming_convention( file_name, hdaf_data_dir, order );
+    
+    int error=0;
+    int read_order=0;
+    double step_size=0;
+    int n_stdker_points=0;
+    double * std_kernel=0;
+    
+    error = read_std_hdaf_kernel_file( file_name, &read_order, &step_size,  &n_stdker_points, &std_kernel );
+    
+    if (error)
+        return 100+error;
+    
+    if ( read_order != order )
+        return 2;
+    
+    if ( std_kernel==NULL )
+        return 3;
+        
+    double s = 1.0/(hdaf_sqrt2*sigma);
+    
+    for (int k=0; k<n_points; k++)
+        (kernel)[k] = s*hdaf_interpolate( std_kernel, n_stdker_points, step_size, eval_points[k]*s );
+    
+    free( std_kernel );
+    std_kernel=0;
+    
+    return 0;
+}
+
+
+
+
+
+
 int get_hdaf_kernel_lp(double **kernel, int *kernel_size, double sampling_period, int order, double cutoff_frequency, const char *hdaf_data_dir )
 {
     double sigma = sigma_from_cutoff_frequency( cutoff_frequency, order );
-    return get_hdaf_kernel( kernel, kernel_size, sampling_period, order, sigma, hdaf_data_dir );
+    int error=0;
+    error = get_hdaf_kernel( kernel, kernel_size, sampling_period, order, sigma, hdaf_data_dir );
+    
+    if ( (*kernel != NULL) && *kernel_size >= 0 && error==0 )
+    {
+        for (int k=0; k<*kernel_size; k++ )
+            (*kernel)[k] *= sampling_period;
+    }
+    
+    return error;
 }
 
 int get_hdaf_kernel_bp(double **kernel, int *kernel_size, double sampling_period, int low_pass_order, double low_pass_frequency, int high_pass_order, double high_pass_frequency, const char *hdaf_data_dir )
@@ -302,17 +353,15 @@ int get_hdaf_kernel_bp(double **kernel, int *kernel_size, double sampling_period
     double *high_pass_ker=0;
     int low_pass_ker_size=0;
     int high_pass_ker_size=0;
-    double low_pass_sigma = sigma_from_cutoff_frequency( low_pass_frequency, low_pass_order );
-    double high_pass_sigma = sigma_from_cutoff_frequency( high_pass_frequency, high_pass_order );
     
     int low_pass_err=0;
     int high_pass_err=0;
     
-    low_pass_err = get_hdaf_kernel( &low_pass_ker, &low_pass_ker_size, sampling_period, low_pass_order, low_pass_sigma, hdaf_data_dir );
+    low_pass_err = get_hdaf_kernel_lp( &low_pass_ker, &low_pass_ker_size, sampling_period, low_pass_order, low_pass_frequency, hdaf_data_dir );
     if (low_pass_err)
         return 100+low_pass_err;
     
-    high_pass_err = get_hdaf_kernel( &high_pass_ker, &high_pass_ker_size, sampling_period, high_pass_order, high_pass_sigma, hdaf_data_dir );
+    high_pass_err = get_hdaf_kernel_lp( &high_pass_ker, &high_pass_ker_size, sampling_period, high_pass_order, high_pass_frequency, hdaf_data_dir );
     if (high_pass_err)
         return 200+high_pass_err;
     

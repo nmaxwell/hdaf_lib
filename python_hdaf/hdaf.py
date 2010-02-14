@@ -24,16 +24,21 @@ c_hdaf.hdaf_free_array.argtypes = [ c_void_p ]
 
 
 
+
 c_hdaf.get_hdaf_kernel.argtypes=[ c_void_p, c_void_p, c_double, c_int, c_double, c_char_p  ]
 c_hdaf.get_hdaf_kernel.restype = c_int
 
 
-def get_hdaf_kernel( sampling_period, order, sigma ):
+def hdaf_kernel( sampling_period, order, sigma ):
     
     ptr = c_void_p()
     size = c_ulong()
-    
+
     error = c_hdaf.get_hdaf_kernel( byref(ptr), byref(size), c_double(sampling_period), c_int(order), c_double(sigma), c_char_p(hdaf_data_dir) )
+    
+    if error != 0:
+        print "Error in 'get_hdaf_kernel'; code ", error
+    
     
     ar = numpy.zeros(size.value)
     c_hdaf.hdaf_equate_arrays( ar.ctypes.data_as(c_void_p), ptr, size )
@@ -42,6 +47,52 @@ def get_hdaf_kernel( sampling_period, order, sigma ):
     
     return ar
 
+
+
+
+c_hdaf.get_hdaf_kernel_arbitrary_points.argtypes=[ c_void_p, c_void_p, c_int, c_int, c_double, c_char_p  ]
+c_hdaf.get_hdaf_kernel_arbitrary_points.restype = c_int
+
+
+def hdaf_kernel_bypts( eval_points, order, sigma ):
+    
+    eval_points = numpy.array(eval_points)
+    ar = numpy.zeros(len(eval_points))
+    length = c_int(len(eval_points))
+    
+    error = c_hdaf.get_hdaf_kernel_arbitrary_points( eval_points.ctypes.data_as(c_void_p), ar.ctypes.data_as(c_void_p), length, c_int(order), c_double(sigma), c_char_p(hdaf_data_dir) )
+    
+    if error != 0:
+        print "Error in 'get_hdaf_kernel_arbitrary_points'; code ", error
+    
+    return ar
+
+
+
+
+
+
+c_hdaf.get_hdaf_kernel_lp.argtypes=[ c_void_p, c_void_p, c_double, c_int, c_double, c_char_p  ]
+c_hdaf.get_hdaf_kernel_lp.restype = c_int
+
+
+def lp_hdaf_kernel( sampling_period, order, cutoff_frequency ):
+    
+    ptr = c_void_p()
+    size = c_ulong()
+
+    error = c_hdaf.get_hdaf_kernel_lp( byref(ptr), byref(size), c_double(sampling_period), c_int(order), c_double(cutoff_frequency), c_char_p(hdaf_data_dir) )
+    
+    if error != 0:
+        print "Error in 'get_hdaf_kernel_lp'; code ", error
+    
+    
+    ar = numpy.zeros(size.value)
+    c_hdaf.hdaf_equate_arrays( ar.ctypes.data_as(c_void_p), ptr, size )
+    c_hdaf.hdaf_free_array( ptr )
+    ptr = c_void_p()
+    
+    return ar
 
 
 
