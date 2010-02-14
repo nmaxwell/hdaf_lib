@@ -58,6 +58,7 @@ get_hdaf_kernel:
 */
 
 #include <stdio.h>
+#include <math.h>
 
 #define hdaf_max_file_name_length 200
 #define hdaf_sqrt2 1.414213562373095

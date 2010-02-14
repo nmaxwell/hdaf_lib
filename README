@@ -1,0 +1,28 @@
+
+
+
+to compile:
+
+gcc -c hdaf.cpp -O3 -o libhdaf.c
+ar rcs libhdaf.a libhdaf.c
+mv libhdaf.a /usr/local/lib/
+rm libhdaf.c
+
+
+
+
+
+icc  hdaf.cpp -o libhdaf.so -shared -fPIC -O3
+mv libhdaf.so /usr/local/lib/
+
+
+gcc -c -fPIC hdaf.cpp -o libhdaf.o
+gcc -shared libhdaf.o -o libhdaf.so
+mv libhdaf.so /usr/local/lib/
+
+
+
+
+
+
+
