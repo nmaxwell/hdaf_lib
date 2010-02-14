@@ -7,7 +7,7 @@
 #include <mathlib/non-lib_things.h>
 
 
-#include "../hdaf.cpp"
+#include "../hdaf.h"
 
 
 #define mp_0 ((mp_real)(0.0))

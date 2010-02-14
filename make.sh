@@ -1,18 +1,4 @@
 
-
-
-to compile:
-
-static:
-
-gcc -Wall -c hdaf.cc -o libhdaf.o -O3
-ar cvq libhdaf.a libhdaf.o
-mv libhdaf.a /usr/local/lib/
-rm libhdaf.o
-
-
-dynamic:
-
 g++ -Wall -fPIC -c hdaf.cc -o libhdaf.o
 g++ -shared -Wl,-soname,libhdaf.so.1 -o libhdaf.so.1.0   libhdaf.o
 cp libhdaf.so.1.0 /usr/local/lib/
@@ -23,9 +9,4 @@ ln -sf /usr/local/lib/libhdaf.so.1.0 /usr/local/lib/libhdaf.so
 ln -sf /usr/local/lib/libhdaf.so.1.0 /usr/local/lib/libhdaf.so.1
 ln -sf /usr/lib/libhdaf.so.1.0 /usr/lib/libhdaf.so
 ln -sf /usr/lib/libhdaf.so.1.0 /usr/lib/libhdaf.so.1
-
-
-
-
-
 

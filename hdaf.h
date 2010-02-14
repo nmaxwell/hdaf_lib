@@ -57,6 +57,8 @@ get_hdaf_kernel:
         8 corrupt kernel data
 */
 
+
+
 #include <stdio.h>
 #include <math.h>
 
@@ -67,16 +69,14 @@ get_hdaf_kernel:
 #define hdaf_sqrtpi  1.772453850905516
 
 
-void std_kernel_file_naming_convention( char * file_name, const char *hdaf_data_dir, int hdaf_order )
-{
-    sprintf( file_name, "%s/%04d.hdaf", hdaf_data_dir, hdaf_order );
-}
 
-double sigma_from_cutoff_frequency( double cutoff_frequency, int hdaf_order )
-{
-    return hdaf_2pi*sqrt((double)(2*hdaf_order+1))/(cutoff_frequency);
-}
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
 
+void std_kernel_file_naming_convention( char * file_name, const char *hdaf_data_dir, int hdaf_order );
+
+double sigma_from_cutoff_frequency( double cutoff_frequency, int hdaf_order );
 
 
 int write_std_hdaf_kernel_file( const char * file_name, int hdaf_order, double step_size, int n_points, double *std_kernel );
@@ -89,21 +89,19 @@ int get_hdaf_kernel(double *&kernel, int & kernel_size, double sampling_period, 
 
 
 
-int get_hdaf_kernel_lp(double *&kernel, int & kernel_size, double sampling_period, int order, double cutoff_frequency, const char *hdaf_data_dir )
-{
-    double sigma = sigma_from_cutoff_frequency( cutoff_frequency, order );
-    return get_hdaf_kernel( kernel, kernel_size, sampling_period, order, sigma, hdaf_data_dir );
-}
+int get_hdaf_kernel_lp(double *&kernel, int & kernel_size, double sampling_period, int order, double cutoff_frequency, const char *hdaf_data_dir );
 
 int get_hdaf_kernel_bp(double *&kernel, int & kernel_size, double sampling_period, int low_pass_order, double low_pass_frequency, int high_pass_order, double high_pass_frequency, const char *hdaf_data_dir );
 
 
 
 
-
-
-
 //double hdaf_fourier_transform(double omega, int m, double sigma);
+
+ #ifdef __cplusplus
+ }
+ #endif
+
 
 #endif
 
