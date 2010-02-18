@@ -250,7 +250,7 @@ int get_hdaf_kernel(double **kernel, int *kernel_size, double sampling_period, i
     
     error = read_std_hdaf_kernel_file( file_name, &read_order, &step_size,  &n_points, &std_kernel );
     
-    if (error)
+    if ( error )
         return 100+error;
     
     if ( read_order != order )
@@ -259,7 +259,9 @@ int get_hdaf_kernel(double **kernel, int *kernel_size, double sampling_period, i
     if ( std_kernel==NULL )
         return 3;
     
-    *kernel_size = (int)ceil((step_size*n_points)/sampling_period);
+    double s = 1.0/(hdaf_sqrt2*sigma);
+    
+    *kernel_size = (int)ceil((step_size*n_points)/(s*sampling_period));
     
     if (*kernel != NULL)
     {
@@ -274,8 +276,6 @@ int get_hdaf_kernel(double **kernel, int *kernel_size, double sampling_period, i
         *kernel_size = 0;
         return 4;
     }
-    
-    double s = 1.0/(hdaf_sqrt2*sigma);
     
     for (int k=0; k<*kernel_size; k++)
         (*kernel)[k] = s*hdaf_interpolate( std_kernel, n_points, step_size, (sampling_period*k)*s );
