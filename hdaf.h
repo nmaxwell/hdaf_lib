@@ -1,6 +1,8 @@
 #ifndef HDAF_H
 #define HDAF_H
 
+//#define HDAF_STANDALONE
+
 
 /*
 
@@ -74,6 +76,11 @@ get_hdaf_kernel:
  extern "C" {
  #endif
 
+void hdaf_equate_arrays( double *x, double *y, unsigned int size );
+
+void hdaf_free_array( double *p );
+
+
 void std_kernel_file_naming_convention( char * file_name, const char *hdaf_data_dir, int hdaf_order );
 
 double sigma_from_cutoff_frequency( double cutoff_frequency, int hdaf_order );
@@ -99,11 +106,70 @@ int get_hdaf_kernel_bp(double **kernel, int * kernel_size, double sampling_perio
 
 
 
+
+
+#ifndef HDAF_STANDALONE
+
+
+// tools:
+
+
+int render_png_scalar(
+    char *fname, int nx, int ny, double *data, int ordering,
+    double center, double major_scale,
+    double red_midpoint, double red_leftvalue, double red_midvalue, double red_rightvalue,
+    double green_midpoint, double green_leftvalue, double green_midvalue, double green_rightvalue,
+    double blue_midpoint, double blue_leftvalue, double blue_midvalue, double blue_rightvalue );
+
+
+int render_png_scalar_resample(
+    char *fname, double *data,
+    double a1, double b1, double a2, double b2, int nx, int ny,
+    double a1_new, double b1_new, double a2_new, double b2_new, int nx_new, int ny_new,
+    double center, double major_scale,
+    double red_midpoint, double red_leftvalue, double red_midvalue, double red_rightvalue,
+    double green_midpoint, double green_leftvalue, double green_midvalue, double green_rightvalue,
+    double blue_midpoint, double blue_leftvalue, double blue_midvalue, double blue_rightvalue,
+    double red_default, double green_default, double blue_default );
+
+
+
+
+//differential operators:
+
+int laplacian2d_init( void **data, int n1, int n2, double L1, double L2, int m1, int m2, double gamma1, double gamma2 );
+int laplacian2d_free( void **data );
+int laplacian2d_execute( void *data, double *in, double *out );
+
+
+
+
+#endif
+
+
+
+// internal
+
+double hdaf_data_access( int k, double *kernel, int n_points );
+
+double hdaf_neville_Pij(double x, int i, int j, int n_data, double * data, double step_size );
+
+double hdaf_interpolate( double * kernel, int n_points, double step_size, double x );
+
+
+
 //double hdaf_fourier_transform(double omega, int m, double sigma);
 
  #ifdef __cplusplus
  }
  #endif
+
+
+
+
+
+
+
 
 
 #endif

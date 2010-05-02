@@ -24,10 +24,6 @@
 #define mp_iu ( complex<mp_real > (mp_0, mp_1 ) )
 
 
-
-
-
-
 int main()
 {
     std_setup();
