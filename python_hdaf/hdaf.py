@@ -2,7 +2,7 @@
 
 from ctypes import *
 from ctypes.util import *
-
+import math
 import numpy
 
 
@@ -21,17 +21,35 @@ c_hdaf.sigma_from_cutoff_frequency.restype = c_double
 def freq_to_sigma( f, m ):
     return c_hdaf.sigma_from_cutoff_frequency( c_double(f), c_int(m) )
 
+def gamma_to_sigma( gamma, order, sampling_period ):
+    return 2.0*float(sampling_period)*math.sqrt(2.0*order+1)/float(gamma)
+    #return c_hdaf.sigma_from_cutoff_frequency( c_double(float(gamma)/(2.0*float(sampling_period))), c_int(order) )
 
 
 c_hdaf.hdaf_equate_arrays.argtypes = [ c_void_p, c_void_p, c_ulong ]
 
 c_hdaf.hdaf_free_array.argtypes = [ c_void_p ]
 
-
-
-
 c_hdaf.get_hdaf_kernel.argtypes=[ c_void_p, c_void_p, c_double, c_int, c_double, c_char_p  ]
 c_hdaf.get_hdaf_kernel.restype = c_int
+
+c_hdaf.get_hdaf_kernel_arbitrary_points.argtypes=[ c_void_p, c_void_p, c_int, c_int, c_double, c_char_p  ]
+c_hdaf.get_hdaf_kernel_arbitrary_points.restype = c_int
+
+c_hdaf.get_hdaf_kernel_lp.argtypes=[ c_void_p, c_void_p, c_double, c_int, c_double, c_char_p  ]
+c_hdaf.get_hdaf_kernel_lp.restype = c_int
+
+c_hdaf.render_png_scalar.argtypes = [ c_char_p, c_int, c_int, c_void_p, c_int,  c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double  ]
+
+c_hdaf.render_png_scalar_resample.argtypes = [ c_char_p, c_void_p, c_double, c_double, c_double, c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_double, c_double,  c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double,  c_double, c_double, c_double ]
+
+
+#c_hdaf.resample2d_hdaf.argtypes = [ c_void_p, c_void_p, c_int, c_int, c_int, c_int, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_int, c_double ]
+
+
+
+
+
 
 
 def hdaf_kernel( sampling_period, order, sigma ):
@@ -53,12 +71,6 @@ def hdaf_kernel( sampling_period, order, sigma ):
     return ar
 
 
-
-
-c_hdaf.get_hdaf_kernel_arbitrary_points.argtypes=[ c_void_p, c_void_p, c_int, c_int, c_double, c_char_p  ]
-c_hdaf.get_hdaf_kernel_arbitrary_points.restype = c_int
-
-
 def hdaf_kernel_bypts( eval_points, order, sigma ):
     
     eval_points = numpy.array(eval_points)
@@ -71,14 +83,6 @@ def hdaf_kernel_bypts( eval_points, order, sigma ):
         print "Error in 'get_hdaf_kernel_arbitrary_points'; code ", error
     
     return ar
-
-
-
-
-
-
-c_hdaf.get_hdaf_kernel_lp.argtypes=[ c_void_p, c_void_p, c_double, c_int, c_double, c_char_p  ]
-c_hdaf.get_hdaf_kernel_lp.restype = c_int
 
 
 def lp_hdaf_kernel( sampling_period, order, cutoff_frequency ):
@@ -99,16 +103,6 @@ def lp_hdaf_kernel( sampling_period, order, cutoff_frequency ):
     
     return ar
 
-
-
-
-
-
-
-
-c_hdaf.render_png_scalar.argtypes = [ c_char_p, c_int, c_int, c_void_p, c_int,  c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double  ]
-
-c_hdaf.render_png_scalar_resample.argtypes = [ c_char_p, c_void_p, c_double, c_double, c_double, c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_double, c_double,  c_double, c_double, c_double, c_double, c_double, c_double, c_double, c_double,  c_double, c_double, c_double ]
 
 
 
@@ -133,10 +127,6 @@ def write_png_resample( data, fname, grid_new, grid_old,  major_scale=1.0, cente
         err = c_hdaf.render_png_scalar_resample( c_char_p(fname), data.ctypes.data_as(c_void_p), grid_old.a1, grid_old.b2, grid_old.a2, grid_old.b2, grid_old.n1, grid_old.n2, grid_new.a1, grid_new.b2, grid_new.a2, grid_new.b2, grid_new.n1, grid_new.n2, center, major_scale, c_double(red_params[0]),c_double(red_params[1]),c_double(red_params[2]),c_double(red_params[3]), c_double(green_params[0]),c_double(green_params[1]),c_double(green_params[2]),c_double(green_params[3]), c_double(blue_params[0]),c_double(blue_params[1]),c_double(blue_params[2]),c_double(blue_params[3]), c_double(default_color[0]), c_double(default_color[1]), c_double(default_color[2]) )
     except:
         print "write_png_resample error, c_waveprop.render_png_scalar, exception."
-
-
-
-
 
 
 
@@ -269,13 +259,35 @@ class hdafLaplacian2D:
 
 
 
-
-
-
-
-
-
+"""
+class hdafResampler2d:
     
-
-
-
+    def __init__(self,  in_grid=None, out_grid=None, in_n1=None, in_n2=None, out_n1=None, out_n2=None, in_dx1=None, in_dx2=None, out_dx1=None, out_dx2=None, in_off1=None, in_off2=None, out_off1=None, out_off2=None, hdaf_order=12, hdaf_gamma=0.8 ):
+        
+        if in_grid is not None:
+            self.in_grid = in_grid
+        else:
+            self.in_grid = grid2d( a1=in_off1, a2=in_off2, n1=in_n1, n2=in_n2, dx1=in_dx1, dx2=in_dx2 )
+        
+        if out_grid is not None:
+            self.out_grid = in_grid
+        else:
+            self.out_grid = grid2d( oa1=out_off1, a2=out_off2, n1=out_n1, n2=out_n2, dx1=out_dx1, dx2=out_dx2 )
+        
+        self.hdaf_order  = hdaf_order
+        self.hdaf_sigma = gamma_to_sigma( hdaf_gamma, hdaf_order, max([self.in_grid.dx1, self.in_grid.dx2]) )
+    
+    def __call__(self, input ):
+        
+        result = self.out_grid.zeros()
+        
+        try:
+            err = c_hdaf.resample2d_hdaf( input.ctypes.data_as(c_void_p), result.ctypes.data_as(c_void_p), c_int(self.in_grid.n1), c_int(self.in_grid.n2), c_int(self.out_grid.n1), c_int(self.out_grid.n2), c_double(self.in_grid.dx1), c_double(self.in_grid.dx2), c_double(self.out_grid.dx1), c_double(self.out_grid.dx2), c_double(self.in_grid.a1), c_double(self.in_grid.a2), c_double(self.out_grid.a1), c_double(self.out_grid.a2), c_int(self.hdaf_order), c_double(self.hdaf_sigma) )
+            if err != 0:
+                print "error: hdafResampler2d call error, error: ", err
+        except:
+            print "error: hdafResampler2d call error, exception."
+            quit()
+        
+        return result
+"""

@@ -1,6 +1,7 @@
 #ifndef HDAF_H
 #define HDAF_H
 
+
 //#define HDAF_STANDALONE
 
 
@@ -64,6 +65,7 @@ get_hdaf_kernel:
 #include <stdio.h>
 #include <math.h>
 
+
 #define hdaf_max_file_name_length 200
 #define hdaf_sqrt2 1.414213562373095
 #define hdaf_pi 3.14159265358979323846264338
@@ -72,9 +74,10 @@ get_hdaf_kernel:
 
 
 
- #ifdef __cplusplus
- extern "C" {
- #endif
+#ifdef __cplusplus
+extern "C" {
+#endif 
+
 
 void hdaf_equate_arrays( double *x, double *y, unsigned int size );
 
@@ -111,8 +114,13 @@ int get_hdaf_kernel_bp(double **kernel, int * kernel_size, double sampling_perio
 #ifndef HDAF_STANDALONE
 
 
-// tools:
+//double direct_hdaf( double x, double order, double sigma);
 
+
+
+
+
+// tools:
 
 int render_png_scalar(
     char *fname, int nx, int ny, double *data, int ordering,
@@ -132,14 +140,20 @@ int render_png_scalar_resample(
     double blue_midpoint, double blue_leftvalue, double blue_midvalue, double blue_rightvalue,
     double red_default, double green_default, double blue_default );
 
-
-
-
-//differential operators:
+// differential operators:
 
 int laplacian2d_init( void **data, int n1, int n2, double L1, double L2, int m1, int m2, double gamma1, double gamma2 );
 int laplacian2d_free( void **data );
 int laplacian2d_execute( void *data, double *in, double *out );
+
+
+
+
+
+// resampling
+
+int resample2d_hdaf( double *in, double *out, int in_n1, int in_n2, int out_n1, int out_n2, double in_dx1, double in_dx2, double out_dx1, double out_dx2, double in_off1, double in_off2, double out_off1, double out_off2, int hdaf_order, double hdaf_sigma );
+
 
 
 
@@ -155,10 +169,6 @@ double hdaf_data_access( int k, double *kernel, int n_points );
 double hdaf_neville_Pij(double x, int i, int j, int n_data, double * data, double step_size );
 
 double hdaf_interpolate( double * kernel, int n_points, double step_size, double x );
-
-
-
-//double hdaf_fourier_transform(double omega, int m, double sigma);
 
  #ifdef __cplusplus
  }

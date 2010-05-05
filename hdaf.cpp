@@ -415,14 +415,32 @@ int get_hdaf_kernel_bp(double **kernel, int *kernel_size, double sampling_period
 }
  #endif
 
-#include<mathlib/math/PDE/laplacian_hdaf.h>
+#include <mathlib/math/PDE/laplacian_hdaf.h>
+#include <mathlib/math/hdaf/hdaf.h>
 
-#include<mathlib/link.cpp>
+#include <mathlib/link.cpp>
 #include "pngwriter.h"
 
  #ifdef __cplusplus
  extern "C" {
  #endif
+
+
+
+/*
+#include <mathlib/math/polynomials/laguerre_polys.h>
+
+double direct_hdaf( double x, double order, double sigma)
+{
+    double sum = 0.0;
+    
+    for (int k=0; k<=order; k++)
+        sum += laguerre(k, -0.5, x*x);
+    
+    return exp(-x*x/(2.0*sigma*sigma))*sum/(hdaf_sqrtpi*sigma);
+}
+*/
+
 
 
 
@@ -572,24 +590,45 @@ int laplacian2d_execute( void *data, double *in, double *out )
 }
 
 
+/*
+int resample2d_hdaf( double *in, double *out, int in_n1, int in_n2, int out_n1, int out_n2, double in_dx1, double in_dx2, double out_dx1, double out_dx2, double in_off1, double in_off2, double out_off1, double out_off2, int hdaf_order, double hdaf_sigma )
+{
+    if ( in==NULL)  return 1;
+    if (out==NULL)  return 2;
+    
+    for (int k=0; k<out_n1*out_n2; k++)
+        out[k] = 0;
+    
+    double x_max = hdaf_truncate_point (1E-16, 1E-17, hdaf_order, hdaf_sigma );
+    double x_max2 = x_max*x_max;
+    
+    for (int i=0; i<out_n1; i++)
+    for (int j=0; j<out_n2; j++)
+    {
+        cout << i << "\t" << j << endl;
+        double y1=out_off1+out_dx1*i;
+        double y2=out_off2+out_dx2*j;
+        double sum=0.0;
+        
+        for (int u=0; u<in_n1; u++)
+        for (int v=0; v<in_n2; v++)
+        {
+            double x1=in_off1+in_dx1*u;
+            double x2=in_off2+in_dx2*v;
+            double r2= (y1-x1)*(y1-x1) + (y2-x2)*(y2-x2);
+            if (r2 <= x_max2)
+                sum += direct_hdaf( sqrt(r2), hdaf_order, hdaf_sigma )*in;
+            
+        }
+        
+        out[i*out_n2+j] = sum;
+    }
+    
+    return 0;
+}
+*/
+
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -599,7 +638,18 @@ int laplacian2d_execute( void *data, double *in, double *out )
  #endif
 
 
+/*
 
+    mp::mp_init(30);
+    ml_poly<mp_real > P;
+    make_hdaf_ml_poly(P, hdaf_order );
+    
+    mp_real s2 = mp_real(1.0)/(2.0*hdaf_sigma*hdaf_sigma);
+    mp_real strj = sqrt(mp_real(2.0));
+    mp_real A = pow(strj*hdaf_sigma,-1)*(in_dx1*in_dx2);
+    
+    sum += dble( A*exp(-s2*r2)*P(dble(sqrt(s2*r2)))* in[u*in_n2+v] );
+*/
 
 
 
